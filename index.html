@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>受保护的链接（请输入密码）</title>
   <style>
-    /* 基础：确保 html/body 占满视口 */
     html, body {
       height: 100%;
       margin: 0;
@@ -16,7 +15,6 @@
       color: #111;
     }
 
-    /* 密码框样式（初始界面） */
     .box {
       max-width: 720px;
       margin: 2rem auto;
@@ -30,7 +28,6 @@
     button{ padding:.6rem 1rem; font-size:1rem; cursor:pointer; }
     #msg{ color:#b00; margin-top:.6rem; }
 
-    /* iframe / fullscreen 样式：固定覆盖整个视口 */
     .full-iframe {
       position: fixed !important;
       top: 0 !important;
@@ -43,52 +40,52 @@
       margin: 0 !important;
       padding: 0 !important;
       display: block;
-      z-index: 9999;
+      z-index: 2;
       background: #fff;
     }
 
-    /* 加载覆盖层，显示在 iframe 之上直到加载完成 */
     .loading-overlay {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      top: 0; left: 0; right: 0; bottom: 0;
       display: flex;
       align-items: center;
       justify-content: center;
       background: rgba(255,255,255,0.96);
-      z-index: 10000;
+      z-index: 3;
       font-size: 1rem;
       color: #333;
     }
 
-    /* 右上角打开新标签按钮 */
-    .open-new-tab {
+    .blocked-overlay {
       position: fixed;
       top: 12px;
+      left: 12px;
       right: 12px;
-      z-index: 10001;
-      background: rgba(0,0,0,0.6);
-      color: #fff;
-      border: 0;
-      padding: 8px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
+      margin: auto;
+      max-width: 760px;
+      z-index: 4;
+      background: rgba(255,255,255,0.97);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+      text-align: left;
     }
 
-    /* 当处于全屏模式时，隐藏滚动条并禁用页面滚动 */
-    .full-mode {
-      overflow: hidden;
-      height: 100%;
+    .back-btn {
+      margin-top: 12px;
+      padding: 8px 12px;
+      font-size: 14px;
+      cursor: pointer;
     }
+
+    .hidden { display: none !important; }
+    .full-mode { overflow: hidden !important; height: 100% !important; }
   </style>
 </head>
 <body>
   <div id="entry" class="box" aria-labelledby="title">
     <h2 id="title">请输入密码以查看链接</h2>
-    <p>输入正确密码后页面将切换为目标页面的全屏显示；若目标站点阻止嵌入，则会在新标签页打开。</p>
+    <p>输入正确密码后页面将切换为目标页面的全屏显示。</p>
 
     <label for="pw">密码</label>
     <input id="pw" type="password" placeholder="输入密码" autofocus />
@@ -119,56 +116,66 @@ function setMsg(text, color = '#b00') {
   }
 }
 
-/* 在当前页面全屏展示 iframe；如果在超时内未触发 load，则回退到新标签打开 */
-function showFullIframeWithFallback() {
-  // 添加类以禁止滚动
+/* 将页面切换到全屏 iframe（不打开或显示任何外部链接）。若被阻止则只显示提示（无链接/复制）。*/
+function showFullIframeStrict() {
+  // 防止滚动
   document.documentElement.classList.add('full-mode');
   document.body.classList.add('full-mode');
 
-  // 清空 body 内容（确保密码框完全移除）
-  document.body.innerHTML = '';
+  // 隐藏密码输入面板（保留在 DOM 中以便可能返回）
+  entry.style.display = 'none';
 
-  // loading 覆盖层（在 iframe 加载时显示）
+  // loading 覆盖层
   const loading = document.createElement('div');
   loading.className = 'loading-overlay';
   loading.textContent = '正在加载目标页面，请稍候...';
   document.body.appendChild(loading);
 
-  // 打开新标签按钮（供用户手动回退）
-  const openBtn = document.createElement('button');
-  openBtn.className = 'open-new-tab';
-  openBtn.textContent = '在新标签打开';
-  openBtn.title = '在新标签中打开目标链接';
-  openBtn.addEventListener('click', () => {
-    window.open(TARGET_URL, '_blank', 'noopener');
-  });
-  document.body.appendChild(openBtn);
-
-  // 创建 iframe 并放入页面（固定覆盖整个视口）
+  // 创建 iframe 并覆盖视口
   const iframe = document.createElement('iframe');
   iframe.className = 'full-iframe';
   iframe.src = TARGET_URL;
   iframe.setAttribute('allowfullscreen', '');
 
-  // 标记是否已加载
   let loaded = false;
-  // onload 表示 iframe 文档已加载（在许多情况下，如果被阻止则不会触发）
   iframe.addEventListener('load', () => {
     loaded = true;
     if (loading && loading.parentNode) loading.parentNode.removeChild(loading);
   });
 
-  // append iframe 最后，浏���器会尝试加载
   document.body.appendChild(iframe);
 
-  // 回退计时：如果在 timeout 毫秒内未触发 load，认为被拦截或加载失败，打开新标签
-  const timeout = 3500; // 可根据需要调整
+  // 超时后若未加载，显示被阻止提示（没有任何打开/复制链接的控件）
+  const timeout = 3500;
   setTimeout(() => {
     if (!loaded) {
-      // 移除 loading，保留按钮提示
       try { if (loading.parentNode) loading.parentNode.removeChild(loading); } catch(e){}
-      alert('目标站点可能阻止嵌入（iframe），将会在新标签中打开该链接。');
-      window.open(TARGET_URL, '_blank', 'noopener');
+      const blocked = document.createElement('div');
+      blocked.className = 'blocked-overlay';
+      blocked.innerHTML = `
+        <strong>无法嵌入目标页面</strong>
+        <p>目标站点可能设置了阻止被嵌入（例如 X-Frame-Options 或 CSP），因此页面无法在当前窗口显示。</p>
+        <p>为安全与隐私考虑，页面不会自动打开或提供目标链接。</p>
+        <div>
+          <button id="backBtn" class="back-btn">返回输入密码</button>
+        </div>
+      `;
+      document.body.appendChild(blocked);
+
+      // 返回按钮：移除 iframe 与提示，恢复密码输入界面
+      document.getElementById('backBtn').addEventListener('click', () => {
+        // 移除阻止提示
+        if (blocked.parentNode) blocked.parentNode.removeChild(blocked);
+        // 移除 iframe
+        if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+        // 恢复 entry 并允许滚动
+        entry.style.display = '';
+        document.documentElement.classList.remove('full-mode');
+        document.body.classList.remove('full-mode');
+        // 清除密码输入并聚焦
+        pwInput.value = '';
+        pwInput.focus();
+      });
     }
   }, timeout);
 }
@@ -178,8 +185,7 @@ okBtn.addEventListener('click', () => {
   const v = pwInput.value || '';
   if (v === PASSWORD) {
     setMsg('密码正确，正在打开目标页面……', '#0a0');
-    // 延迟一点，让用户看到提示，然后替换页面
-    setTimeout(showFullIframeWithFallback, 200);
+    setTimeout(showFullIframeStrict, 200);
   } else {
     setMsg('密码错误，请重试。', '#b00');
   }
