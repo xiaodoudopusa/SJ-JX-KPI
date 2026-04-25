@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>受保护的链接（请输入密码）</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; padding: 2rem; background:#f7f7f8; color:#111; }
+    .box { max-width:720px; margin:0 auto; background:white; padding:1.2rem; border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
+    label { display:block; margin-bottom:.5rem; font-weight:600; }
+    input[type="password"]{ width:100%; padding:.6rem; font-size:1rem; box-sizing:border-box; margin-bottom:.6rem; }
+    button{ padding:.6rem 1rem; font-size:1rem; cursor:pointer; }
+    #msg{ color:#b00; margin-top:.6rem; }
+    iframe{ width:100%; height:70vh; border:1px solid #ddd; margin-top:1rem; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>请输入密码以查看链接</h2>
+    <p>输入正确密码后页面将尝试加载目标链接或在新标签页打开它。</p>
+
+    <label for="pw">密码</label>
+    <input id="pw" type="password" placeholder="输入密码" autofocus />
+    <div>
+      <button id="ok">确认</button>
+      <button id="clear" type="button">清空</button>
+    </div>
+    <div id="msg"></div>
+
+    <div id="viewer"></div>
+  </div>
+
+<script>
+/*
+  说明：
+  - TARGET_URL 请勿改动（即你给的链接）
+  - PASSWORD 为明文校验（1029）。若你想避免明文出现在源码，可改用哈希比对，但这并不强安全。
+*/
+const TARGET_URL = "https://www.kdocs.cn/l/caNR1nFxPBGc?R=L1MvMQ==";
+const PASSWORD = "1029"; // 校验密码（已按你要求设置）
+
+const pwInput = document.getElementById('pw');
+const okBtn = document.getElementById('ok');
+const clearBtn = document.getElementById('clear');
+const msg = document.getElementById('msg');
+const viewer = document.getElementById('viewer');
+
+function showError(text) {
+  msg.textContent = text;
+  setTimeout(()=>{ msg.textContent=''; }, 4000);
+}
+
+function openTargetNewTab() {
+  window.open(TARGET_URL, '_blank', 'noopener');
+}
+
+function tryEmbedIframe() {
+  viewer.innerHTML = ''; // 清空
+  const iframe = document.createElement('iframe');
+  iframe.src = TARGET_URL;
+  iframe.onload = function(){ /* 加载成功 */ };
+  iframe.onerror = function(){
+    // 如果 iframe 被阻止或加载失败，提示并在新标签打开
+    showError('页面无法内嵌（目标站点可能阻止嵌入），已在新标签打开。');
+    openTargetNewTab();
+  };
+  // 先把 iframe 插入 DOM，浏览器会尝试加载；若被拒绝，onerror 或控制台会有提示
+  viewer.appendChild(iframe);
+}
+
+okBtn.addEventListener('click', ()=>{
+  const v = pwInput.value || '';
+  if (v === PASSWORD) {
+    msg.style.color = '#0a0';
+    msg.textContent = '密码正确，正在加载目标链接……';
+    // 优先尝试内嵌，如果阻止则会 fallback 到新标签页
+    tryEmbedIframe();
+  } else {
+    msg.style.color = '#b00';
+    showError('密码错误，请重试。');
+  }
+});
+
+clearBtn.addEventListener('click', ()=>{ pwInput.value=''; pwInput.focus(); });
+
+pwInput.addEventListener('keydown', (e)=>{
+  if (e.key === 'Enter') okBtn.click();
+});
+</script>
+</body>
+</html>
