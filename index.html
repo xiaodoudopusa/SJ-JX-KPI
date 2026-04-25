@@ -5,54 +5,90 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>受保护的链接（请输入密码）</title>
   <style>
-    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin:0; background:#f7f7f8; color:#111; }
-    .box { max-width:720px; margin:2rem auto; background:white; padding:1.2rem; border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
+    /* 基础：确保 html/body 占满视口 */
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      background: #f7f7f8;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color: #111;
+    }
+
+    /* 密码框样式（初始界面） */
+    .box {
+      max-width: 720px;
+      margin: 2rem auto;
+      background: white;
+      padding: 1.2rem;
+      border-radius: 8px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    }
     label { display:block; margin-bottom:.5rem; font-weight:600; }
     input[type="password"]{ width:100%; padding:.6rem; font-size:1rem; box-sizing:border-box; margin-bottom:.6rem; }
     button{ padding:.6rem 1rem; font-size:1rem; cursor:pointer; }
     #msg{ color:#b00; margin-top:.6rem; }
-    /* iframe/fullscreen styles (will be used after correct password) */
+
+    /* iframe / fullscreen 样式：固定覆盖整个视口 */
     .full-iframe {
-      position:fixed;
-      inset:0; /* top:0; right:0; bottom:0; left:0 */
-      width:100%;
-      height:100%;
-      border:0;
-      margin:0;
-      padding:0;
-      background: #fff;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      border: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      display: block;
       z-index: 9999;
+      background: #fff;
     }
+
+    /* 加载覆盖层，显示在 iframe 之上直到加载完成 */
     .loading-overlay {
-      position:fixed;
-      inset:0;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background: rgba(255,255,255,0.95);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.96);
       z-index: 10000;
-      font-size:1rem;
-      color:#333;
+      font-size: 1rem;
+      color: #333;
     }
-    .close-btn {
-      position:fixed;
-      top:10px;
-      right:10px;
-      z-index:10001;
+
+    /* 右上角打开新标签按钮 */
+    .open-new-tab {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      z-index: 10001;
       background: rgba(0,0,0,0.6);
-      color:#fff;
-      border:0;
-      padding:8px 12px;
-      border-radius:6px;
-      cursor:pointer;
-      font-size:14px;
+      color: #fff;
+      border: 0;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    /* 当处于全屏模式时，隐藏滚动条并禁用页面滚动 */
+    .full-mode {
+      overflow: hidden;
+      height: 100%;
     }
   </style>
 </head>
 <body>
-  <div id="entry" class="box">
-    <h2>请输入密码以查看链接</h2>
-    <p>输入正确密码后页面将跳转为目标页面的全屏显示；若目标站点阻止嵌入，则会在新标签页打开。</p>
+  <div id="entry" class="box" aria-labelledby="title">
+    <h2 id="title">请输入密码以查看链接</h2>
+    <p>输入正确密码后页面将切换为目标页面的全屏显示；若目标站点阻止嵌入，则会在新标签页打开。</p>
 
     <label for="pw">密码</label>
     <input id="pw" type="password" placeholder="输入密码" autofocus />
@@ -60,7 +96,7 @@
       <button id="ok">确认</button>
       <button id="clear" type="button">清空</button>
     </div>
-    <div id="msg"></div>
+    <div id="msg" role="status" aria-live="polite"></div>
   </div>
 
 <script>
@@ -78,59 +114,61 @@ const entry = document.getElementById('entry');
 function setMsg(text, color = '#b00') {
   msg.style.color = color;
   msg.textContent = text;
-  if (text) setTimeout(()=>{ if (msg.textContent === text) msg.textContent = ''; }, 4000);
-}
-
-/* 打开新标签 */
-function openInNewTab() {
-  window.open(TARGET_URL, '_blank', 'noopener');
+  if (text) {
+    setTimeout(()=>{ if (msg.textContent === text) msg.textContent = ''; }, 4000);
+  }
 }
 
 /* 在当前页面全屏展示 iframe；如果在超时内未触发 load，则回退到新标签打开 */
 function showFullIframeWithFallback() {
-  // 清空 body 内容
-  document.documentElement.scrollTop = 0;
+  // 添加类以禁止滚动
+  document.documentElement.classList.add('full-mode');
+  document.body.classList.add('full-mode');
+
+  // 清空 body 内容（确保密码框完全移除）
   document.body.innerHTML = '';
 
   // loading 覆盖层（在 iframe 加载时显示）
   const loading = document.createElement('div');
   loading.className = 'loading-overlay';
-  loading.textContent = '正在加载，请稍候...';
+  loading.textContent = '正在加载目标页面，请稍候...';
   document.body.appendChild(loading);
 
-  // 关闭按钮（用户可以手动返回或打开新页）
-  const closeBtn = document.createElement('button');
-  closeBtn.className = 'close-btn';
-  closeBtn.textContent = '打开新标签';
-  closeBtn.title = '在新标签中打开目标链接';
-  closeBtn.addEventListener('click', openInNewTab);
-  document.body.appendChild(closeBtn);
+  // 打开新标签按钮（供用户手动回退）
+  const openBtn = document.createElement('button');
+  openBtn.className = 'open-new-tab';
+  openBtn.textContent = '在新标签打开';
+  openBtn.title = '在新标签中打开目标链接';
+  openBtn.addEventListener('click', () => {
+    window.open(TARGET_URL, '_blank', 'noopener');
+  });
+  document.body.appendChild(openBtn);
 
-  // 创建 iframe
+  // 创建 iframe 并放入页面（固定覆盖整个视口）
   const iframe = document.createElement('iframe');
   iframe.className = 'full-iframe';
   iframe.src = TARGET_URL;
   iframe.setAttribute('allowfullscreen', '');
 
-  // 当 iframe 成功加载时，移除 loading
+  // 标记是否已加载
   let loaded = false;
-  const onLoad = () => {
+  // onload 表示 iframe 文档已加载（在许多情况下，如果被阻止则不会触发）
+  iframe.addEventListener('load', () => {
     loaded = true;
-    if (loading.parentNode) loading.parentNode.removeChild(loading);
-  };
-  iframe.addEventListener('load', onLoad);
+    if (loading && loading.parentNode) loading.parentNode.removeChild(loading);
+  });
 
+  // append iframe 最后，浏���器会尝试加载
   document.body.appendChild(iframe);
 
   // 回退计时：如果在 timeout 毫秒内未触发 load，认为被拦截或加载失败，打开新标签
-  const timeout = 3000; // ms
+  const timeout = 3500; // 可根据需要调整
   setTimeout(() => {
     if (!loaded) {
-      // 释放当前页面 UI，并在新标签打开目标页
-      try { /* clean up if needed */ } catch(e){}
-      // 给用户提示
+      // 移除 loading，保留按钮提示
+      try { if (loading.parentNode) loading.parentNode.removeChild(loading); } catch(e){}
       alert('目标站点可能阻止嵌入（iframe），将会在新标签中打开该链接。');
-      openInNewTab();
+      window.open(TARGET_URL, '_blank', 'noopener');
     }
   }, timeout);
 }
@@ -141,7 +179,7 @@ okBtn.addEventListener('click', () => {
   if (v === PASSWORD) {
     setMsg('密码正确，正在打开目标页面……', '#0a0');
     // 延迟一点，让用户看到提示，然后替换页面
-    setTimeout(showFullIframeWithFallback, 300);
+    setTimeout(showFullIframeWithFallback, 200);
   } else {
     setMsg('密码错误，请重试。', '#b00');
   }
