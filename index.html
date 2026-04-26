@@ -3,196 +3,178 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>晟捷绩效考核表（KPI）</title>
+  <title>受保护的页面（输入密码）</title>
   <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      background: #f7f7f8;
+    :root{
+      --accent:#0db36b; --accent-dark:#0a8a52; --muted:#6b776e;
+    }
+    html,body{
+      height:100%; margin:0; padding:0;
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      color: #111;
+      background: linear-gradient(135deg, #e8fff5 0%, #b9f3d1 30%, #7fe1a1 60%, #4fc07a 100%);
+      -webkit-font-smoothing:antialiased;
     }
-
-    .box {
-      max-width: 720px;
-      margin: 2rem auto;
-      background: white;
-      padding: 1.2rem;
-      border-radius: 8px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    .center-wrap{
+      min-height:100%; display:flex; align-items:center; justify-content:center; padding:24px;
+      box-sizing:border-box;
     }
-    label { display:block; margin-bottom:.5rem; font-weight:600; }
-    input[type="password"]{ width:100%; padding:.6rem; font-size:1rem; box-sizing:border-box; margin-bottom:.6rem; }
-    button{ padding:.6rem 1rem; font-size:1rem; cursor:pointer; }
-    #msg{ color:#b00; margin-top:.6rem; }
-
-    .full-iframe {
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
-      bottom: 0 !important;
-      width: 100% !important;
-      height: 100% !important;
-      border: 0 !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      display: block;
-      z-index: 2;
-      background: #fff;
+    .card{
+      width:100%; max-width:520px; background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(250,255,250,0.95));
+      border-radius:16px; box-shadow: 0 10px 30px rgba(6, 60, 36, 0.12); padding:28px; text-align:center;
+      border: 1px solid rgba(255,255,255,0.6); backdrop-filter: blur(6px);
     }
-
-    .loading-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255,255,255,0.96);
-      z-index: 3;
-      font-size: 1rem;
-      color: #333;
-    }
-
-    .blocked-overlay {
-      position: fixed;
-      top: 12px;
-      left: 12px;
-      right: 12px;
-      margin: auto;
-      max-width: 760px;
-      z-index: 4;
-      background: rgba(255,255,255,0.97);
-      border-radius: 8px;
-      padding: 16px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-      text-align: left;
-    }
-
-    .back-btn {
-      margin-top: 12px;
-      padding: 8px 12px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-
-    .hidden { display: none !important; }
-    .full-mode { overflow: hidden !important; height: 100% !important; }
+    .brand{ display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:14px; }
+    .logo{ width:48px; height:48px; border-radius:10px; background: linear-gradient(135deg,var(--accent),var(--accent-dark));
+      box-shadow: 0 6px 18px rgba(11,179,107,0.18); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:20px; }
+    h1{ margin:0; font-size:20px; color:#05321a; }
+    p.lead { margin:10px 0 18px; color:var(--muted); font-size:14px; }
+    .input-row{ display:flex; gap:10px; align-items:center; justify-content:center; margin-top:6px; }
+    input[type="password"]{ flex:1; padding:12px 14px; font-size:16px; border-radius:10px; border:1px solid rgba(10,10,10,0.06); outline:none; }
+    button { background: linear-gradient(180deg,var(--accent),var(--accent-dark)); color:#fff; border:0; padding:10px 14px; font-size:15px; border-radius:10px; cursor:pointer; box-shadow: 0 8px 16px rgba(11,179,107,0.18); }
+    button.ghost { background: transparent; color: #05462a; border: 1px solid rgba(5,70,42,0.08); box-shadow: none; }
+    .hint { margin-top:12px; color:var(--muted); font-size:13px; }
+    .full-iframe { position: fixed !important; top:0; left:0; right:0; bottom:0; width:100% !important; height:100% !important; border:0; z-index:999; background:#fff; }
+    .loading-overlay{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.9); z-index:1001; font-size:16px; color:#084a28; }
+    .blocked-overlay { position:fixed; inset: 18px; margin:auto; max-width:880px; z-index:1002; background: rgba(255,255,255,0.98); border-radius:12px; padding:18px; box-shadow: 0 10px 30px rgba(6,60,36,0.12); color:#08361f; text-align:left; }
+    .hidden { display:none !important; }
+    @media (max-width:560px){ .card{ padding:18px; border-radius:12px; } input[type="password"]{ padding:10px; } button{ padding:10px 12px; } .logo{ width:42px; height:42px; } }
   </style>
 </head>
 <body>
-  <div id="entry" class="box" aria-labelledby="title">
-    <h2 id="title">请输入密码以查看链接</h2>
-    <p>输入正确密码后页面将切换为目标页面的全屏显示。</p>
+<script>
+/* ====== CONFIG: paste the block generated by encrypt.js here (replace these placeholder values) ====== */
+// Replace these 3 lines with encrypt.js output block (exactly)
+const ITERATIONS = 200000;
+const SALT_B64 = "F+aud2KJ2pMvuWrJwVx/2w==";
+const IV_B64   = "Qxf9lBQp0agDUlCr";
+const CIPHER_B64 = "vtRRGc1cDZq6h6IeGt6SraSk9OOgcyNQgNy5krFwBHZx1lzp460XBQoHmTRi10yPb1sTcEL91byn9bWbp9Q=";
+// ================================================================================================
+</script>
 
-    <label for="pw">密码</label>
-    <input id="pw" type="password" placeholder="输入密码" autofocus />
-    <div style="margin-top:.5rem;">
-      <button id="ok">确认</button>
-      <button id="clear" type="button">清空</button>
+  <div class="center-wrap">
+    <div id="entry" class="card" role="form" aria-labelledby="title">
+      <div class="brand">
+        <div class="logo">G</div>
+        <div style="text-align:left">
+          <h1 id="title">受保护的页面</h1>
+          <div class="hint" style="margin-top:6px;">请输入密码以查看完整页面</div>
+        </div>
+      </div>
+
+      <p class="lead">页面采用客户端解密方式：链接以密文形式保存在页面中，只有输入正确密码才会解密并载入。</p>
+
+      <div class="input-row" aria-live="polite">
+        <input id="pw" type="password" placeholder="输入密码" autocomplete="current-password" />
+        <button id="ok" title="确认">确认</button>
+      </div>
+
+      <div style="display:flex; gap:8px; justify-content:center; margin-top:12px;">
+        <button id="clear" class="ghost" title="清空">清空</button>
+        <div id="msg" style="align-self:center; color:#a0321f;"></div>
+      </div>
+
+      <p class="hint" style="margin-top:14px;">注：此方案仅为静态前端保护，不能替代服务器端认证。</p>
     </div>
-    <div id="msg" role="status" aria-live="polite"></div>
   </div>
 
 <script>
-/* 配置 */
-const TARGET_URL = "https://www.kdocs.cn/l/caNR1nFxPBGc?R=L1MvMQ==";
-const PASSWORD = "1029"; // 明文校验（源码可见）
+/* ===== 页面逻辑（不含任何明文模式或打开新标签的功能） ===== */
+function b64ToBuf(b64){ return Uint8Array.from(atob(b64), c=>c.charCodeAt(0)); }
+function bufToStr(buf){ return new TextDecoder().decode(buf); }
 
-/* 元素引用 */
 const pwInput = document.getElementById('pw');
 const okBtn = document.getElementById('ok');
 const clearBtn = document.getElementById('clear');
 const msg = document.getElementById('msg');
 const entry = document.getElementById('entry');
 
-function setMsg(text, color = '#b00') {
+function showMsg(text, color='#a0321f'){
   msg.style.color = color;
   msg.textContent = text;
-  if (text) {
-    setTimeout(()=>{ if (msg.textContent === text) msg.textContent = ''; }, 4000);
-  }
+  if(text) setTimeout(()=>{ if(msg.textContent===text) msg.textContent=''; }, 3500);
 }
 
-/* 将页面切换到全屏 iframe（不打开或显示任何外部链接）。若被阻止则只显示提示（无链接/复制）。*/
-function showFullIframeStrict() {
-  // 防止滚动
-  document.documentElement.classList.add('full-mode');
-  document.body.classList.add('full-mode');
+async function deriveKeyAndDecrypt(password){
+  if (!SALT_B64 || SALT_B64.startsWith('REPLACE_') || !IV_B64 || IV_B64.startsWith('REPLACE_') || !CIPHER_B64 || CIPHER_B64.startsWith('REPLACE_')) {
+    throw new Error('密文配置未正确填入，请先用 encrypt.js 生成并粘贴到页面顶部。');
+  }
+  const enc = new TextEncoder();
+  const baseKey = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  const salt = b64ToBuf(SALT_B64);
+  const key = await crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: ITERATIONS, hash: 'SHA-256' },
+    baseKey,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['decrypt']
+  );
+  const iv = b64ToBuf(IV_B64);
+  const cipher = b64ToBuf(CIPHER_B64);
+  const plainBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, cipher);
+  return bufToStr(new Uint8Array(plainBuf));
+}
 
-  // 隐藏密码输入面板（保留在 DOM 中以便可能返回）
-  entry.style.display = 'none';
-
-  // loading 覆盖层
+function enterFullIframe(url){
+  document.documentElement.style.overflow='hidden';
+  document.body.style.overflow='hidden';
+  entry.remove();
   const loading = document.createElement('div');
-  loading.className = 'loading-overlay';
-  loading.textContent = '正在加载目标页面，请稍候...';
+  loading.className='loading-overlay';
+  loading.textContent='正在加载，请稍候...';
   document.body.appendChild(loading);
 
-  // 创建 iframe 并覆盖视口
   const iframe = document.createElement('iframe');
-  iframe.className = 'full-iframe';
-  iframe.src = TARGET_URL;
-  iframe.setAttribute('allowfullscreen', '');
+  iframe.className='full-iframe';
+  iframe.src = url;
+  iframe.setAttribute('allowfullscreen','');
 
-  let loaded = false;
-  iframe.addEventListener('load', () => {
-    loaded = true;
-    if (loading && loading.parentNode) loading.parentNode.removeChild(loading);
+  let loaded=false;
+  iframe.addEventListener('load', ()=>{
+    loaded=true;
+    if (loading.parentNode) loading.parentNode.removeChild(loading);
   });
 
   document.body.appendChild(iframe);
 
-  // 超时后若未加载，显示被阻止提示（没有任何打开/复制链接的控件）
-  const timeout = 3500;
-  setTimeout(() => {
-    if (!loaded) {
-      try { if (loading.parentNode) loading.parentNode.removeChild(loading); } catch(e){}
+  // 超时检测：若未加载，显示阻止提示（不显示或提供任何链接）
+  const TIMEOUT = 4000;
+  setTimeout(()=>{
+    if(!loaded){
+      if(loading.parentNode) loading.parentNode.removeChild(loading);
       const blocked = document.createElement('div');
-      blocked.className = 'blocked-overlay';
+      blocked.className='blocked-overlay';
       blocked.innerHTML = `
         <strong>无法嵌入目标页面</strong>
-        <p>目标站点可能设置了阻止被嵌入（例如 X-Frame-Options 或 CSP），因此页面无法在当前窗口显示。</p>
-        <p>为安全与隐私考虑，页面不会自动打开或提供目标链接。</p>
-        <div>
-          <button id="backBtn" class="back-btn">返回输入密码</button>
+        <p>目标站点可能设置了阻止被嵌入（例如 X-Frame-Options 或 CSP），因此无法在当前窗口显示。</p>
+        <p>出于安全与隐私考虑，本页面不会自动打开或显示目标链接。</p>
+        <div style="margin-top:12px; text-align:center;">
+          <button id="backBtn" style="padding:10px 14px; border-radius:8px; background:linear-gradient(180deg,var(--accent),var(--accent-dark)); color:#fff; border:0; cursor:pointer;">返回输入密码</button>
         </div>
       `;
       document.body.appendChild(blocked);
-
-      // 返回按钮：移除 iframe 与提示，恢复密码输入界面
-      document.getElementById('backBtn').addEventListener('click', () => {
-        // 移除阻止提示
-        if (blocked.parentNode) blocked.parentNode.removeChild(blocked);
-        // 移除 iframe
-        if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
-        // 恢复 entry 并允许滚动
-        entry.style.display = '';
-        document.documentElement.classList.remove('full-mode');
-        document.body.classList.remove('full-mode');
-        // 清除密码输入并聚焦
-        pwInput.value = '';
-        pwInput.focus();
+      document.getElementById('backBtn').addEventListener('click', ()=>{
+        // 为了彻底恢复到初始状态，reload 页面（不会显示明文）
+        location.reload();
       });
     }
-  }, timeout);
+  }, TIMEOUT);
 }
 
-/* 事件绑定 */
-okBtn.addEventListener('click', () => {
-  const v = pwInput.value || '';
-  if (v === PASSWORD) {
-    setMsg('密码正确，正在打开目标页面……', '#0a0');
-    setTimeout(showFullIframeStrict, 200);
-  } else {
-    setMsg('密码错误，请重试。', '#b00');
+okBtn.addEventListener('click', async ()=>{
+  const pw = pwInput.value || '';
+  if(!pw){ showMsg('请输入密码'); pwInput.focus(); return; }
+  showMsg('验证中...', '#0a6f3a');
+  try{
+    const url = await deriveKeyAndDecrypt(pw);
+    enterFullIframe(url);
+  }catch(e){
+    console.error(e);
+    showMsg('密码错误或解密失败', '#a00');
   }
 });
 
-clearBtn.addEventListener('click', () => { pwInput.value = ''; pwInput.focus(); });
-pwInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') okBtn.click(); });
+pwInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') okBtn.click(); });
+clearBtn.addEventListener('click', ()=>{ pwInput.value=''; pwInput.focus(); });
 </script>
 </body>
 </html>
