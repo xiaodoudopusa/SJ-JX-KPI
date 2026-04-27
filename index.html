@@ -160,7 +160,7 @@ function enterFullIframe(url){
   document.body.appendChild(iframe);
 
   // 超时检测：若未加载，显示阻止提示（不显示或提供任何链接）
-  const TIMEOUT = 4000;
+  const TIMEOUT = 300000;
   setTimeout(()=>{
     if(!loaded){
       if(loading.parentNode) loading.parentNode.removeChild(loading);
